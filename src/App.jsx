@@ -1,6 +1,5 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import ThemeToggle from "./components/ThemeToggle";
-import { TopBannerAd, SidebarAd } from "./components/AdPlaceholders";
 import Clocks from "./components/Clocks";
 import WorldClocks from "./components/WorldClocks";
 import Calendar from "./components/Calendar";
@@ -12,101 +11,149 @@ import GeoNewsWeather from "./components/GeoNewsWeather";
 export default function App() {
   const [lat, setLat] = useState(null);
   const [lon, setLon] = useState(null);
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(t);
+  }, []);
 
   const handleLocation = useCallback((latitude, longitude) => {
     setLat(latitude);
     setLon(longitude);
   }, []);
 
+  const timeStr = now.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: true,
+  });
+  const dateStr = now.toLocaleDateString("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      {/* Header – shadcn style */}
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-14 max-w-screen-2xl items-center px-4 sm:px-6">
-          <div className="mr-4 flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground font-bold text-sm">
-              TG
-            </div>
-            <span className="hidden font-bold sm:inline-block">
-              TimeGovern
-            </span>
+    <div className="min-h-screen" style={{ backgroundColor: "var(--tad-bg)" }}>
+      {/* ===== timeanddate-style top bar ===== */}
+      <div className="bg-[#003366] text-white text-sm">
+        <div className="max-w-6xl mx-auto px-4 py-1.5 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <span className="font-bold text-base tracking-tight">TimeGovern</span>
+            <span className="hidden sm:inline opacity-80">|</span>
+            <span className="hidden sm:inline opacity-90">Clocks, Calendars & Time Tools</span>
           </div>
-
-          <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
-            <a href="#clocks" className="transition-colors hover:text-foreground/80 text-foreground/60">Clocks</a>
-            <a href="#tools" className="transition-colors hover:text-foreground/80 text-foreground/60">Tools</a>
-            <a href="#astronomy" className="transition-colors hover:text-foreground/80 text-foreground/60">Astronomy</a>
-            <a href="#news" className="transition-colors hover:text-foreground/80 text-foreground/60">News</a>
-          </nav>
-
-          <div className="flex flex-1 items-center justify-end gap-2">
-            <ThemeToggle />
-          </div>
+          <ThemeToggle />
         </div>
-      </header>
-
-      {/* Top Banner */}
-      <div className="container max-w-screen-2xl px-4 sm:px-6 py-4">
-        <TopBannerAd />
       </div>
 
-      {/* Main */}
-      <main className="container max-w-screen-2xl px-4 sm:px-6 pb-16">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <aside className="hidden lg:block lg:col-span-2">
-            <div className="sticky top-20">
-              <SidebarAd position="left" />
-            </div>
-          </aside>
-
-          <div className="lg:col-span-8 space-y-6">
-            <section id="clocks">
-              <Clocks />
-            </section>
-
-            <WorldClocks />
-
-            <section id="tools" className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Calendar />
-              <Countdown />
-            </section>
-
-            <section id="astronomy">
-              <AstronomyModule lat={lat} lon={lon} />
-            </section>
-
-            <BusinessCalculators />
-
-            <section id="news">
-              <GeoNewsWeather onLocation={handleLocation} />
-            </section>
+      {/* ===== Main navigation ===== */}
+      <nav className="bg-[#0066cc] text-white text-sm shadow">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="flex flex-wrap items-center gap-1 py-2">
+            {["World Clock", "Time Zones", "Calendar", "Timers", "Sun & Moon", "Weather", "Calculators"].map((item) => (
+              <a
+                key={item}
+                href={`#${item.toLowerCase().replace(/ & /g, "-").replace(/ /g, "-")}`}
+                className="px-3 py-1.5 rounded hover:bg-white/15 transition-colors font-medium"
+              >
+                {item}
+              </a>
+            ))}
           </div>
+        </div>
+      </nav>
 
-          <aside className="hidden lg:block lg:col-span-2">
-            <div className="sticky top-20">
-              <SidebarAd position="right" />
+      {/* ===== Hero current time (like timeanddate) ===== */}
+      <div className="bg-white border-b" style={{ borderColor: "var(--tad-border)" }}>
+        <div className="max-w-6xl mx-auto px-4 py-6">
+          <div className="text-center sm:text-left">
+            <div className="text-sm text-gray-500 mb-1">Current Time</div>
+            <div className="text-4xl sm:text-5xl font-light tracking-tight tabular-nums text-[#003366] dark:text-blue-300">
+              {timeStr}
             </div>
-          </aside>
+            <div className="text-lg text-gray-600 dark:text-gray-300 mt-1">
+              {dateStr}
+            </div>
+            <div className="text-sm text-gray-500 mt-2">
+              Your local time • Week {Math.ceil(((now - new Date(now.getFullYear(), 0, 1)) / 86400000 + 1) / 7)}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ===== Main content ===== */}
+      <main className="max-w-6xl mx-auto px-4 py-8 space-y-10">
+        {/* Feature cards grid – timeanddate style */}
+        <section>
+          <h2 className="text-xl font-semibold text-[#003366] dark:text-blue-300 mb-4 border-b pb-2" style={{ borderColor: "var(--tad-border)" }}>
+            Popular Tools
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[
+              { title: "World Clock", desc: "Current local time around the world.", href: "#world-clock" },
+              { title: "Time Zone Converter", desc: "Calculate time difference between places.", href: "#clocks" },
+              { title: "Calendar", desc: "Interactive monthly calendar.", href: "#calendar" },
+              { title: "Countdown Timer", desc: "Countdown to any date and time.", href: "#countdown" },
+              { title: "Sun & Moon", desc: "Sunrise, sunset, twilight & eclipses.", href: "#astronomy" },
+              { title: "Business Calculators", desc: "Working days & deadline projector.", href: "#business" },
+            ].map((item) => (
+              <a
+                key={item.title}
+                href={item.href}
+                className="tad-card p-4 hover:shadow-md transition-shadow block"
+              >
+                <div className="font-semibold text-[#0066cc] mb-1">{item.title}</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">{item.desc}</div>
+              </a>
+            ))}
+          </div>
+        </section>
+
+        {/* Full modules */}
+        <section id="clocks">
+          <Clocks />
+        </section>
+
+        <section id="world-clock">
+          <WorldClocks />
+        </section>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6" id="calendar">
+          <Calendar />
+          <div id="countdown">
+            <Countdown />
+          </div>
         </div>
 
-        <div className="lg:hidden mt-10 space-y-6">
-          <SidebarAd position="mobile-1" />
-          <SidebarAd position="mobile-2" />
-        </div>
+        <section id="astronomy">
+          <AstronomyModule lat={lat} lon={lon} />
+        </section>
+
+        <section id="business">
+          <BusinessCalculators />
+        </section>
+
+        <section id="weather">
+          <GeoNewsWeather onLocation={handleLocation} />
+        </section>
       </main>
 
       {/* Footer */}
-      <footer className="border-t py-8">
-        <div className="container max-w-screen-2xl px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <div className="flex h-6 w-6 items-center justify-center rounded bg-primary text-primary-foreground text-xs font-bold">
-              TG
+      <footer className="bg-[#003366] text-white mt-12">
+        <div className="max-w-6xl mx-auto px-4 py-8">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-sm">
+            <div>
+              <span className="font-bold">TimeGovern.com</span>
+              <span className="opacity-70 ml-2">— Clocks, Calendars & Time Tools</span>
             </div>
-            <span className="text-sm font-medium">TimeGovern</span>
+            <div className="opacity-70">
+              © {new Date().getFullYear()} TimeGovern
+            </div>
           </div>
-          <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} TimeGovern.com — Professional time & calendar tools
-          </p>
         </div>
       </footer>
     </div>

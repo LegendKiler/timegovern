@@ -2,72 +2,55 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
-    --primary: 240 5.9% 10%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 240 5.9% 10%;
-    --radius: 0.5rem;
-  }
-
-  .dark {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 240 5.9% 10%;
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 240 4.9% 83.9%;
-  }
+/* timeanddate.com inspired palette */
+:root {
+  --tad-blue: #0066cc;
+  --tad-blue-dark: #004d99;
+  --tad-header: #003366;
+  --tad-bg: #f5f7fa;
+  --tad-card: #ffffff;
+  --tad-border: #d0d7de;
+  --tad-text: #1a1a1a;
+  --tad-muted: #555555;
 }
 
-@layer base {
-  * {
-    @apply border-border;
-  }
-  body {
-    @apply bg-background text-foreground antialiased;
-    font-feature-settings: "rlig" 1, "calt" 1;
-  }
+.dark {
+  --tad-bg: #0f1419;
+  --tad-card: #1a2332;
+  --tad-border: #2d3a4a;
+  --tad-text: #e8eaed;
+  --tad-muted: #9aa0a6;
 }
 
-/* Analog clock hands */
+body {
+  @apply antialiased;
+  background-color: var(--tad-bg);
+  color: var(--tad-text);
+}
+
+.tad-card {
+  background: var(--tad-card);
+  border: 1px solid var(--tad-border);
+  border-radius: 6px;
+}
+
+.tad-link {
+  color: var(--tad-blue);
+}
+.tad-link:hover {
+  color: var(--tad-blue-dark);
+  text-decoration: underline;
+}
+
 .clock-hand {
   transform-origin: 50% 100%;
   transition: transform 0.05s linear;
 }
 
-/* Scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
+  width: 8px;
 }
 ::-webkit-scrollbar-thumb {
-  @apply bg-muted-foreground/30 rounded-full;
-}
-::-webkit-scrollbar-thumb:hover {
-  @apply bg-muted-foreground/50;
+  background: #c1c1c1;
+  border-radius: 4px;
 }
