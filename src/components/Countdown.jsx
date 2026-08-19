@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { differenceInSeconds } from "date-fns";
+import { cn } from "../lib/utils";
 
 export default function Countdown() {
   const [target, setTarget] = useState("");
@@ -10,32 +11,34 @@ export default function Countdown() {
       setRemaining(null);
       return;
     }
-
     const update = () => {
       const diff = differenceInSeconds(new Date(target), new Date());
       if (diff <= 0) {
         setRemaining({ days: 0, hours: 0, minutes: 0, seconds: 0, finished: true });
         return;
       }
-      const days = Math.floor(diff / 86400);
-      const hours = Math.floor((diff % 86400) / 3600);
-      const minutes = Math.floor((diff % 3600) / 60);
-      const seconds = diff % 60;
-      setRemaining({ days, hours, minutes, seconds, finished: false });
+      setRemaining({
+        days: Math.floor(diff / 86400),
+        hours: Math.floor((diff % 86400) / 3600),
+        minutes: Math.floor((diff % 3600) / 60),
+        seconds: diff % 60,
+        finished: false,
+      });
     };
-
     update();
     const timer = setInterval(update, 1000);
     return () => clearInterval(timer);
   }, [target]);
 
   return (
-    <section className="premium-card p-6 h-full">
-      <h2 className="section-title text-base mb-5">Countdown Timer</h2>
+    <div className="rounded-xl border bg-card text-card-foreground shadow h-full">
+      <div className="flex flex-col space-y-1.5 p-6 pb-4">
+        <h3 className="font-semibold leading-none tracking-tight">Countdown</h3>
+      </div>
 
-      <div className="space-y-5">
+      <div className="p-6 pt-0 space-y-4">
         <div>
-          <label htmlFor="countdown-target" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+          <label htmlFor="countdown-target" className="text-sm font-medium leading-none mb-2 block">
             Target date & time
           </label>
           <input
@@ -43,27 +46,26 @@ export default function Countdown() {
             type="datetime-local"
             value={target}
             onChange={(e) => setTarget(e.target.value)}
-            className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-            aria-label="Select target date and time for countdown"
+            className={cn(
+              "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm",
+              "ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            )}
           />
         </div>
 
         {remaining && (
-          <div className="grid grid-cols-4 gap-2.5">
+          <div className="grid grid-cols-4 gap-2">
             {[
               { label: "Days", value: remaining.days },
               { label: "Hours", value: remaining.hours },
               { label: "Mins", value: remaining.minutes },
               { label: "Secs", value: remaining.seconds },
             ].map((item) => (
-              <div
-                key={item.label}
-                className="premium-card-inner p-3 text-center"
-              >
-                <div className="text-2xl font-bold tabular-nums text-gray-900 dark:text-white">
+              <div key={item.label} className="rounded-lg border bg-background p-3 text-center">
+                <div className="text-2xl font-bold tabular-nums">
                   {String(item.value).padStart(2, "0")}
                 </div>
-                <div className="text-[11px] uppercase tracking-wider text-gray-400 mt-1">
+                <div className="text-[10px] uppercase tracking-wider text-muted-foreground mt-1">
                   {item.label}
                 </div>
               </div>
@@ -77,6 +79,6 @@ export default function Countdown() {
           </p>
         )}
       </div>
-    </section>
+    </div>
   );
 }
