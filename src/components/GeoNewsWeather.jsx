@@ -2,13 +2,13 @@ import { useEffect, useState } from "react";
 import { Cloud, Wind, MapPin } from "lucide-react";
 
 /**
- * Parse Google News RSS XML into a simple article list
+ * Parse Google News RSS XML into clean article objects
  */
 function parseGoogleNewsRSS(xmlText) {
   try {
     const parser = new DOMParser();
     const doc = parser.parseFromString(xmlText, "text/xml");
-    const items = Array.from(doc.querySelectorAll("item")).slice(0, 5);
+    const items = Array.from(doc.querySelectorAll("item")).slice(0, 6);
 
     return items.map((item) => {
       const title = item.querySelector("title")?.textContent || "";
@@ -16,12 +16,14 @@ function parseGoogleNewsRSS(xmlText) {
       const pubDate = item.querySelector("pubDate")?.textContent || "";
       const source = item.querySelector("source")?.textContent || "Google News";
 
+      // Google often appends " - Source Name" to the title – clean it
+      const cleanTitle = title.replace(/\s+-\s+[^-]+$/, "").trim();
+
       return {
-        title: title.replace(/ - .*$/, "").trim(), // clean Google News title suffix
+        title: cleanTitle || title,
         url: link,
         source: { name: source },
         publishedAt: pubDate ? new Date(pubDate).toISOString() : null,
-        origin: "google",
       };
     });
   } catch (e) {
@@ -34,7 +36,6 @@ export default function GeoNewsWeather({ onLocation }) {
   const [location, setLocation] = useState(null);
   const [weather, setWeather] = useState(null);
   const [news, setNews] = useState([]);
-  const [newsSource, setNewsSource] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -62,7 +63,7 @@ export default function GeoNewsWeather({ onLocation }) {
         setLocation(locData);
         onLocation?.(locData.lat, locData.lon);
 
-        // 2. Weather (Open-Meteo)
+        // 2. Weather (Open-Meteo – free)
         const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${loc.latitude}&longitude=${loc.longitude}&current=temperature_2m,wind_speed_10m&timezone=auto`;
         const wRes = await fetch(weatherUrl);
         if (!wRes.ok) throw new Error("Weather fetch failed");
@@ -74,69 +75,31 @@ export default function GeoNewsWeather({ onLocation }) {
           windUnit: wData.current_units?.wind_speed_10m || "km/h",
         });
 
-        // 3. News – try both sources
-        let articles = [];
-        let sourceLabel = "";
-
-        // --- A. NewsAPI.org (if key exists) ---
-        const apiKey = import.meta.env.VITE_NEWS_API_KEY;
-        if (apiKey && apiKey !== "your_newsapi_key_here") {
-          try {
-            const newsUrl = `https://newsapi.org/v2/top-headlines?country=${loc.country_code.toLowerCase()}&pageSize=5&apiKey=${apiKey}`;
-            const nRes = await fetch(newsUrl);
-            if (nRes.ok) {
-              const nData = await nRes.json();
-              if (nData.articles && nData.articles.length > 0) {
-                articles = nData.articles.map((a) => ({
-                  ...a,
-                  origin: "newsapi",
-                }));
-                sourceLabel = "NewsAPI.org";
-              }
-            }
-          } catch (e) {
-            console.warn("NewsAPI.org failed", e);
-          }
-        }
-
-        // --- B. Google News RSS (always free, no key) ---
-        // Used as primary if no NewsAPI results, or as additional source
+        // 3. Free news – Google News RSS (no API key needed, forever free)
         try {
-          // Country-specific Google News RSS
           const country = (loc.country_code || "us").toLowerCase();
+          // Country-aware Google News RSS feed
           const googleRssUrl = `https://news.google.com/rss?hl=en-${country}&gl=${country.toUpperCase()}&ceid=${country.toUpperCase()}:en`;
 
-          // Use a public CORS proxy so the browser can fetch the RSS
-          // (Google RSS does not send CORS headers)
+          // Public CORS proxy so the browser can read the RSS
           const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(googleRssUrl)}`;
 
           const gRes = await fetch(proxyUrl);
           if (gRes.ok) {
             const xmlText = await gRes.text();
-            const googleArticles = parseGoogleNewsRSS(xmlText);
-
-            if (googleArticles.length > 0) {
-              if (articles.length === 0) {
-                // No NewsAPI results → use Google as main source
-                articles = googleArticles;
-                sourceLabel = "Google News";
-              } else {
-                // Both available → merge (NewsAPI first, then Google)
-                articles = [...articles, ...googleArticles].slice(0, 8);
-                sourceLabel = "NewsAPI.org + Google News";
-              }
-            }
+            const articles = parseGoogleNewsRSS(xmlText);
+            setNews(articles);
+          } else {
+            setNews([]);
           }
         } catch (e) {
           console.warn("Google News RSS failed", e);
+          setNews([]);
         }
-
-        setNews(articles);
-        setNewsSource(sourceLabel);
       } catch (err) {
         console.error(err);
         setError(err.message || "Failed to load geo data");
-        // Fallback location so astronomy still works
+        // Fallback so astronomy still works
         onLocation?.(-33.8688, 151.2093);
       } finally {
         setLoading(false);
@@ -192,21 +155,18 @@ export default function GeoNewsWeather({ onLocation }) {
         </div>
       )}
 
-      {/* News section */}
+      {/* Free Google News */}
       <div>
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-medium">Top Headlines</h3>
-          {newsSource && (
-            <span className="text-xs text-gray-500 dark:text-gray-400">
-              via {newsSource}
-            </span>
-          )}
+          <span className="text-xs text-gray-500 dark:text-gray-400">
+            via Google News (free)
+          </span>
         </div>
 
         {news.length === 0 ? (
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            No headlines available right now. Google News is always free; add
-            VITE_NEWS_API_KEY for extra NewsAPI.org results.
+            No headlines available at the moment. Please try again later.
           </p>
         ) : (
           <ul className="space-y-3">
@@ -221,23 +181,10 @@ export default function GeoNewsWeather({ onLocation }) {
                   <div className="font-medium text-sm line-clamp-2">
                     {article.title}
                   </div>
-                  <div className="text-xs text-gray-500 mt-1 flex items-center gap-2">
-                    <span>{article.source?.name || "News"}</span>
-                    {article.publishedAt && (
-                      <span>
-                        · {new Date(article.publishedAt).toLocaleDateString()}
-                      </span>
-                    )}
-                    {article.origin === "google" && (
-                      <span className="px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 text-[10px]">
-                        Google
-                      </span>
-                    )}
-                    {article.origin === "newsapi" && (
-                      <span className="px-1.5 py-0.5 rounded bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 text-[10px]">
-                        NewsAPI
-                      </span>
-                    )}
+                  <div className="text-xs text-gray-500 mt-1">
+                    {article.source?.name}
+                    {article.publishedAt &&
+                      ` · ${new Date(article.publishedAt).toLocaleDateString()}`}
                   </div>
                 </a>
               </li>
