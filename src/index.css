@@ -2,23 +2,56 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ========== Premium base ========== */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+}
+
+/* ========== Premium card style ========== */
+@layer components {
+  .premium-card {
+    @apply bg-white dark:bg-gray-900/80 rounded-2xl border border-gray-200/80 dark:border-gray-800
+           shadow-sm hover:shadow-md transition-shadow duration-300
+           backdrop-blur-sm;
+  }
+
+  .premium-card-inner {
+    @apply bg-gray-50/80 dark:bg-gray-800/40 rounded-xl border border-gray-100 dark:border-gray-700/60;
+  }
+
+  .section-title {
+    @apply text-lg font-semibold tracking-tight text-gray-900 dark:text-gray-50;
+  }
+
+  .muted {
+    @apply text-gray-500 dark:text-gray-400;
+  }
+}
+
 /* Smooth analog clock hands */
 .clock-hand {
   transform-origin: 50% 100%;
   transition: transform 0.05s linear;
 }
 
-/* Custom scrollbar for better UX */
+/* Custom scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
-  @apply bg-gray-100 dark:bg-gray-800;
+  @apply bg-transparent;
 }
 ::-webkit-scrollbar-thumb {
-  @apply bg-gray-400 dark:bg-gray-600 rounded-full;
+  @apply bg-gray-300 dark:bg-gray-600 rounded-full;
 }
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-gray-500 dark:bg-gray-500;
+  @apply bg-gray-400 dark:bg-gray-500;
 }
