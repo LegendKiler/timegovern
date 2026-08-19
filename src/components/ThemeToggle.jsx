@@ -25,13 +25,13 @@ export default function ThemeToggle() {
   return (
     <button
       onClick={() => setDark((prev) => !prev)}
-      className="p-2 rounded-lg bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+      className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-950"
       aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
     >
       {dark ? (
-        <Sun className="w-5 h-5 text-yellow-400" />
+        <Sun className="w-4.5 h-4.5 text-amber-400" />
       ) : (
-        <Moon className="w-5 h-5 text-gray-700" />
+        <Moon className="w-4.5 h-4.5 text-gray-600" />
       )}
     </button>
   );
